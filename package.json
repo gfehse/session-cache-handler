@@ -1,0 +1,8 @@
+{
+  "name": "cache-server",
+  "description": "The intent is to temporarilly persist user login sessions for a planned time",
+  "main": "cacheService.js",
+  "devDependencies": {
+    "node-cache": "^3.0.0"
+  }
+}
