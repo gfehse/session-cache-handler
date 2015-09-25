@@ -3,7 +3,8 @@
 
 	var NodeCache = require( "node-cache" );
 
-	return {
+	var cacheAPI = module.exports =  
+	{
 	// setting default ttl to 3 minutes
 	sessionCache : new NodeCache({ ttl: 180000, checkperiod: 1000 }),
 
@@ -20,6 +21,8 @@
 	}
 
 	};
+
+	return cacheAPI;
 
 
 })();

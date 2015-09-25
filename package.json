@@ -3,6 +3,8 @@
   "description": "The intent is to temporarilly persist user login sessions for a planned time",
   "main": "cacheService.js",
   "devDependencies": {
-    "node-cache": "^3.0.0"
+    "finalhandler": "^0.4.0",
+    "node-cache": "^3.0.0",
+    "router": "^1.1.3"
   }
 }

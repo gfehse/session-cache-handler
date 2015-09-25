@@ -1,28 +1,46 @@
 var http = require('http');
+var Router = require('router');
+var finalhandler = require('finalhandler')
 var _url_ = require('url');
 var cacheAPI = require('./cacheAPI.js');
 
 // Create the http Server Cache
-var cacheServer = http.createServer(handleRequest);
+var router = Router();
+
+
+var cacheServer = http.createServer(
+	function(req, res) {
+		router(req,res, finalhandler(req,res));
+	});
 cacheServer.listen(15000);
 
 
-function handleRequest(request, response) {
+function handleGET(request, response) {
 
-	var method = request.method;
 	var url = _url_.parse(request.url, true);
 	var result = '';
-	if(method=='GET' && url.query && url.query.sessionId) {
+	if(url.query && url.query.sessionId) {
 		result = cacheAPI.readCache(url.query.sessionId);
-	}
 
-	if(method=='POST') {
-
+		if(!result) {
+			result = 'not found';
+		}
 	}
 
 	response.writeHead(200, { 'Content-Type': 'text/plain' });
+
 	response.write(result);
 	response.end();
 
 
 }
+
+function handlePOST(request, response) {
+
+
+
+}
+
+
+router.get('/cache/get', handleGET);
+router.get('/cache/update', handlePOST);
