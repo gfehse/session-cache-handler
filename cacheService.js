@@ -1,18 +1,14 @@
 var http = require('http');
-var Router = require('router');
-var finalhandler = require('finalhandler')
+var express = require("express");
+var app = express();
+var cacheApp = express();
+app.use("/cache", cacheApp);
 var _url_ = require('url');
 var cacheAPI = require('./cacheAPI.js');
 
-// Create the http Server Cache
-var router = Router();
+app.listen(15000);
 
 
-var cacheServer = http.createServer(
-	function(req, res) {
-		router(req,res, finalhandler(req,res));
-	});
-cacheServer.listen(15000);
 
 
 function handleGET(request, response) {
@@ -27,20 +23,37 @@ function handleGET(request, response) {
 		}
 	}
 
-	response.writeHead(200, { 'Content-Type': 'text/plain' });
-
-	response.write(result);
-	response.end();
+	handleResponse(200, {}, response);
 
 
 }
 
 function handlePOST(request, response) {
 
+	var body;
+    request.on('data', function(chunk){
+    	if(body) {
+ 	       body += chunk;		
+    	}
+    	else {
+    		body = chunk;
+    	}
+    });
+
+    request.on('end', function(){
+        var fbResponse = JSON.parse(body);
+ 		handleResponse(200, fbResponse, response);
+ 	});
+}   
 
 
+function handleResponse(httpCode, object, response) {
+		response.writeHead(httpCode, { 'Content-Type': 'application/json' });
+        response.write(JSON.stringify(object));
+        response.end();
 }
 
 
-router.get('/cache/get', handleGET);
-router.get('/cache/update', handlePOST);
+
+cacheApp.get('/get', handleGET);
+cacheApp.post('/update', handlePOST);
