@@ -14,21 +14,64 @@ app.listen(15000);
 function handleGET(request, response) {
 
 	var url = _url_.parse(request.url, true);
-	var result = '';
-	if(url.query && url.query.sessionId) {
-		result = cacheAPI.readCache(url.query.sessionId);
 
-		if(!result) {
-			result = 'not found';
+	if(url.query && url.query.sessionId) {
+		var result = cacheAPI.readCache(url.query.sessionId);
+
+		if(result) {
+			handleResponse(response).ok(result);
+		}
+		else {
+			handleResponse(response).notfound();
 		}
 	}
 
-	handleResponse(200, {}, response);
 
 
 }
 
 function handlePOST(request, response) {
+
+    handlePayload(request, function(data) {
+       var fbResponse = JSON.parse(data);
+
+        if(fbResponse.sessionId && fbResponse.userId) {
+        	var result = cacheAPI.storeCache(fbResponse.sessionId, fbResponse.userId, 5);
+
+        	if(result) {
+	  			handleResponse(response).ok();
+		 		return;
+        	}
+        }
+
+		handleResponse(response).notfound();
+ 
+    });
+
+}
+
+function handlePUT(request, response) {
+
+    handlePayload(request, function(data) {
+       var fbResponse = JSON.parse(data);
+
+        if(fbResponse.sessionId) {
+        	var result = cacheAPI.updateTTL(fbResponse.sessionId, 5);
+        	if(result) {
+	  			handleResponse(response).ok();
+		 		return;
+        	}
+
+        }
+  		handleResponse(response).notfound();
+
+    });
+
+
+}   
+
+
+function handlePayload(request, callbackSuccess, callbackError) {
 
 	var body;
     request.on('data', function(chunk){
@@ -40,20 +83,42 @@ function handlePOST(request, response) {
     	}
     });
 
+    request.on('error', function(err) {
+    	callbackError(err);
+    });
+
     request.on('end', function(){
-        var fbResponse = JSON.parse(body);
- 		handleResponse(200, fbResponse, response);
+    	callbackSuccess(body);
  	});
-}   
 
 
-function handleResponse(httpCode, object, response) {
-		response.writeHead(httpCode, { 'Content-Type': 'application/json' });
-        response.write(JSON.stringify(object));
-        response.end();
+}
+
+function handleResponse(response) {
+
+	return {
+		ok: function(data) {
+			response.writeHead(200, { 'Content-Type': 'application/json' });
+			if(data) {
+	    	    response.write(data);
+			}
+	        response.end();
+		},
+		notfound: function() {
+			response.writeHead(404, { 'Content-Type': 'text/plan' });
+	        response.end();
+		},
+		error: function() {
+			response.writeHead(500, { 'Content-Type': 'text/plan' });
+	        response.end();
+		}
+
+	};
+
 }
 
 
 
 cacheApp.get('/get', handleGET);
 cacheApp.post('/update', handlePOST);
+cacheApp.put('/update', handlePUT);

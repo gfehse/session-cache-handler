@@ -6,14 +6,19 @@
 	var cacheAPI = module.exports =  
 	{
 	// setting default ttl to 3 minutes
-	sessionCache : new NodeCache({ ttl: 180000, checkperiod: 1000 }),
+	sessionCache : new NodeCache({checkperiod: 1 }),
+	ttl: 30, // default ttl
 
 	readCache : function(sessionId) {
 		return this.sessionCache.get(sessionId);
 	},
 	
-	storeCache : function(sessionId, userId, ttl) {
-		return this.sessionCache.set(sessionId, userId, ttl);
+	storeCache : function(sessionId, userId) {
+		return this.sessionCache.set(sessionId, userId, this.ttl);
+	},
+
+	updateTTL : function(sessionId) {
+		return this.sessionCache.ttl(sessionId, this.ttl);
 	},
 
 	deleteCache : function(sessionId) {
@@ -21,6 +26,10 @@
 	}
 
 	};
+
+	cacheAPI.sessionCache.on( "expired", function( key, value ){
+    	console.log('expired! key=['+key + '], value=['+value+']');   
+	});
 
 	return cacheAPI;
 
