@@ -13,18 +13,22 @@ app.listen(15000);
 
 function handleGET(request, response) {
 
-	var url = _url_.parse(request.url, true);
+	return (function(request, response) {
+		var url = _url_.parse(request.url, true);
 
-	if(url.query && url.query.sessionId) {
-		var result = cacheAPI.readCache(url.query.sessionId);
+		if(url.query && url.query.sessionId) {
+			var result = cacheAPI.readCache(url.query.sessionId);
 
-		if(result) {
-			handleResponse(response).ok(result);
+			if(result) {
+				handleResponse(response).ok(result);
+			}
+			else {
+				handleResponse(response).notfound();
+			}
 		}
-		else {
-			handleResponse(response).notfound();
-		}
-	}
+
+	})(request, response);
+
 
 
 
@@ -32,8 +36,10 @@ function handleGET(request, response) {
 
 function handlePOST(request, response) {
 
-    handlePayload(request, function(data) {
-       var fbResponse = JSON.parse(data);
+	return (function(request, response) {
+
+		handlePayload(request, function(data) {
+       	var fbResponse = JSON.parse(data);
 
         if(fbResponse.sessionId && fbResponse.userId) {
         	var result = cacheAPI.storeCache(fbResponse.sessionId, fbResponse.userId, 5);
@@ -48,30 +54,40 @@ function handlePOST(request, response) {
  
     });
 
+
+	})(request, response);
+
 }
 
 function handlePUT(request, response) {
 
-    handlePayload(request, function(data) {
-       var fbResponse = JSON.parse(data);
+	return (function(request, response){
 
-        if(fbResponse.sessionId) {
-        	var result = cacheAPI.updateTTL(fbResponse.sessionId, 5);
-        	if(result) {
-	  			handleResponse(response).ok();
-		 		return;
+	   handlePayload(request, function(data) {
+    	   var fbResponse = JSON.parse(data);
+
+        	if(fbResponse.sessionId) {
+        		var result = cacheAPI.updateTTL(fbResponse.sessionId, 5);
+        		if(result) {
+	  				handleResponse(response).ok();
+		 			return;
+        		}
+
         	}
-
-        }
-  		handleResponse(response).notfound();
+  			handleResponse(response).notfound();
 
     });
 
+
+	})(request, response);
+
+ 
 
 }   
 
 
 function handlePayload(request, callbackSuccess, callbackError) {
+
 
 	var body;
     request.on('data', function(chunk){
@@ -119,6 +135,6 @@ function handleResponse(response) {
 
 
 
-cacheApp.get('/get', handleGET);
-cacheApp.post('/update', handlePOST);
-cacheApp.put('/update', handlePUT);
+cacheApp.get('/', handleGET);
+cacheApp.post('/', handlePOST);
+cacheApp.put('/', handlePUT);
